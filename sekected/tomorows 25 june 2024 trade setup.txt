@@ -1,0 +1,231 @@
+read this document "difference of result data by dailyPS and TimePS and Quote api methods.docx"
+
+**use polars in place of pandas , **use decorator numba jit (@numbajit)  and *** do profiling of the code using in built profiling 
+
+use await ,httpio look at "Python Asyncio, Requests, Aiohttp | Make faster API Calls" by "Patrick Collins"
+
+last convert code to cython
+
+
+
+Always make two time price series calls 
+
+1.	1a :	for the prev days OHLC 1b in else condition in case daily price series do not respond .  where the end date is the previous date and pick data from row[0]
+2.	2a:	 for current days candle and trend calculation for indicators “plus ” combindely call and use the get quote for the first time of the day especially before the market open to include the post market  and pre market trading ohlc 
+	2b.	But once the market commences make sure the live data get appended while caliculating the indicators
+
+for current day caliculate and save prev days ohlc cpr and camarilla levels using cached properies and use those value throught the day 
+
+**( explore ,if the caching of ttl or lru or lfu can be applied and how check "(Optional) caching of candle data.py"  )run asyncio mode indicators caliculation continuously similar to ltp feed and check the condition for trade entry or exit to operate continuously 
+
+call upstox holiday first in the day @8.55 am and if today is trading day , find and save OHLC , cpr ,camer , in cached properies for today , overwrite values of yesterdays cached properties 
+
+"wrap the code in class and Classify passing index symbol and trading symbol as input" for "sorting and strike price + getting index ltp spot price and getting ATM  "
+
+call or invoke and feed ltp to candle pattern and fib continuously from "list comprehension with asyncio of subscribe.py"
+
+for concurrency call all of them using gather or create_task.append or create task using for _ in list[] using asyncio from / inside of list comprehension with asyncio of subscribe.py
+
+***** use polars , @numbaJIT decorator and polars for the code where same logic like sorting and strike price + getting index ltp spot price , ATM
+
+
+when trading condition is met call def or object of order placing enter and exit (buy and sell ) concurrently same time using gather --- this may be initiated inside from the technical indicator code 
+
+****inside order placement code  using async and concurrenct like gather , while placing/entering  the PE put trade  , check and exit any existing CE long  trade in trade / order book from shoonya / flatrade  in case of live trades , if it is paper trade check any property flag within the code or read the value which is written on the file system and do vice versa for while placing/entering  CE long trade 
+
+ -> put a condition to check total number of trades that can be taken inside CPR code , update the count to 1 for each trade taken and maintain it in the file read and update it each time for multiple indexes
+
+- > (rethink about different scenarios ) don not buy or sell when existing trade is already present matching direction that is direction is downwards , no more put pe buy orders if already a put buy trade is acive  and same for uptrend
+
+ - do not enter trade if todays candles timeframe based close is between previous days OHLC or no trade if todays  candles are just between prev days H and low 
+ - check for more OHLC and candle patterns from gahanshamtech and embed logic in cpr and camarilla class
+
+ -> maintain seperate file csv or text  so that there will not be any racing or locking or io errors by date 
+
+
+can we reduce memory using slots and datatypes.docx
+
+
+
+
+
+******************************************************************
+reduce the computation and increase speed 
+go to recent working copy of chat gpt .py which do not have variable names dynamically generated 
+only have two py files for nifty 50 and bank nifty with symbols and tokens hardcoded 
+
+run the both files/classes using threads to get the ltp in paralel 
+inside each thread below operations happen sequencially except order placing  buying or selling/ exit which happens in new threads within
+
+and initiate the operation to get options data using not threads , later filter and get strike prices as usual 
+
+while placing the buy and sell / exit orders also use the threads to make the execution faster than waiting for one to complete and other to start 
+
+on failure or exception scenarios retry again , if the previous buy and sell condition still valid 
+
+
+
+ ->one  web socket subscribe where multiple indices are subscribed giving ltp of each symbol
+ ->event update feed runs every second 
+ -> ltp data for each symbol is saved in respecive single dicts
+ -> call  time price series not in a thread and pass data to OHLC, class cpr and camerilla pivots are created 
+  ->  new thread : select cpr code which has the logic OHLC of time frame and ohlc of current day and ohlc of previous day generated
+  -> new thread : for indicators
+  ->  new thread for fibnoci series
+join  above three threads   
+ - > when  cpr and camerialla pivots, ohlc , indicators , feib suggest for a trade , create seperate thread for each sell/downtrend( buy ATM put PE) or buy/uptrend ( buy ATM call CE)  is inside class of cpr and pivots atm of the option is extracted based on ltp recieved/ inputted / called from subscribe loop from
+ 
+ - >in threads sell/ exit current/existing trades  when trend  reversal signal comes 
+ no need to join
+ 
+
+$$$$$$Keep time counter start finish for each operation especially for the processing logics like cpr , atm , 
+
+
+
+"
+profile
+Python
+import cProfile
+
+def my_function():
+    # Your code here
+
+# Before your function call
+cProfile.run('my_function()')
+
+# After your function call
+# This will print a report to the console showing execution times for each line
+Use code with caution.
+content_copy
+2. line_profiler Module:
+
+This third-party module provides more detailed profiling information, including line-by-line execution times.
+Installation: pip install line_profiler
+Usage:
+Python
+@profile
+def my_function():
+    # Your code here
+
+my_function()
+
+# This will generate a ".lprof" file containing line-by-line profiling data.
+# Use `kernprof -l -v <filename>.lprof` to view a detailed report.  "
+
+
+
+and again profile ------
+"Using Built-in Profiling Tools (cProfile)
+Python comes with a built-in profiling module called cProfile, which provides deterministic profiling of Python programs.
+
+Using cProfile from Command Line:
+
+Open your terminal or command prompt and run your Python script with cProfile:
+
+Copy code
+python -m cProfile -o profile_data.prof your_script.py
+Replace your_script.py with the path to your Python script. This command will generate a profiling data file profile_data.prof.
+
+Analyzing the Profiling Data:
+
+After running the profiling command, you can analyze the profiling data using the pstats module, either interactively or programmatically.
+
+python
+Copy code
+import pstats
+
+# Load the profiling data
+profile_data = pstats.Stats('profile_data.prof')
+
+# Print statistics ordered by cumulative time
+profile_data.sort_stats('cumulative').print_stats(10)
+This will print out the top 10 functions ordered by cumulative time, helping you identify where most of the time is spent.
+
+Using Third-Party Profiling Tools
+While cProfile is powerful, third-party tools often provide more advanced visualizations and insights.
+
+Line Profiler (line_profiler)
+
+Install line_profiler using pip:
+
+Copy code
+pip install line_profiler
+Decorate the function you want to profile with @profile and run your script using kernprof:
+
+Copy code
+kernprof -l -v your_script.py
+This will print line-by-line profiling results, showing which lines take the most time.
+
+Memory Profiler (memory_profiler)
+
+Install memory_profiler using pip:
+
+Copy code
+pip install memory_profiler
+Use the @profile decorator to profile memory usage:
+
+Copy code
+python -m memory_profiler your_script.py
+This will print memory usage line-by-line, helping you identify memory-intensive operations."
+
+============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+
+	
+
+
+dont need:
+	** No option greeks caliculation , no api YF calling , no webscraping for intereset rate on rbi and investing , noooo reading time on option gyan and implementing logic as option greeks change every milli second
+
+	**NOOO use the logic to dynamically adjust the worker count for process and therad pool executors  , which ever is decided to be used 
+max_worker dynamic executor.py and max_worker dynamic pool of multiprocessing.py
+
+	** NOOO change the web crawler code to async io ,aiohttp, cache , queues, , use takgroups or gather 
+
+	***NOOO write a web carwler to check money control ndtv , CNBC websites for Indian interstate changes continuously every 5 minutes 
+
+	*** use type cast of datatypes with caching for sorting and filtering and finding pe and ce atm and spot price and conversion of ltp to uint32 
+
+
+Not working for speedy ltp feed :
+	qsn to chat gpt :
+	receiving ltp feed continuously and pass the same feed as it is to function for computation OHLC , how to do as not miss any of ltp feed any 	time and process almost same speed as it is received, while converting ltp of str type  feed  to uint16  and using caching function to convert 	from str to uint 16 , later is queing a better option can queue implemenetation have a mechanism to continously pick from the queue without 	waiting for queue  to reach any size limit FIFO type
+
+	ans : https://chatgpt.com/share/6dfa18a3-699b-430a-8305-392a5478f6ab
+
+
+**Nooooo (optional )can run mutiple therads of options for all the indexes using threads as above stated or plain 1 by 1 concurrent futures 
+
+
+******Noooo checked there was better alternative of "for item in items[] " check "list comprehension with asyncio of subscribe.py" , use map method with concurrent while calling the method class object via while loop in the subscibe .py file
+
+@@@@@@decide to Download via threads and then do processing via processors?? - asyncio with aiohttp , cache , queues , rtask groups or gather ()
+
+
+***** below are not needed 
+$$ seperate atm - sorting filtering and getting strike in 1 thread placing order() in a thread / process decide - asyncio await rtask groups or gather () + cache or lru_cache , LFU Cache TTL cache  (@ cache or @lru_cache) , pip install cachetools and pip install aiocache
+https://chatgpt.com/share/3b800636-be3c-45eb-9546-53b178594032   and ** Massive Python Speed-Up: Caching Across Sessions  that is previous caliculated cache is available for next session 
+
+*** use the cached properties for yfinince volatility for option greeks and the previous day OHLC and this has to be changed every day conditionally use del or delete the previous cached property to delete the valyue stored and recacliculate for the rest of the day until the the cached value is valid based on some condition *****
+
+or you can used cached property for fetching the trading symbol and token for nifty and other index one time and  kee it in cached property till the object is open or in th pickle  or hard code it or read from file
+
+use aiohttp and asyncio for webscraping the interest rates and yfininace and later casche them using propertied cached properties (optional) or lru cache or lfu cache or ttl cache
+
+
+==================================================== "already note above==========
+seperate the code into logical blocks
+
+below code belong to one index ( a seperate class for each index?) 5 min
+
+1.caliculate prev days ohlc, cpr , camerilla : * per day / trading session only once and save and use throught the day * based on output from historical data ie.. prev days time price series for respective indexes
+
+2a. caliculate the indicators : ** "initially" during the day start take time price series of the index based on output from historical data ie.. prev days time price series + get quote method (get quote gives latest of  pre / post market updated prices) for respective indexes , 
+
+2b. once the trading session starts ,continue to feed the ltp data of index in the selected time frame 5 mins to the indicators code to make the indicators responsive to the live market updates
+
+2c. once market session starts , take continous index ltp feed and extract atm strike and trading symbol and ltp 
+
+3 . pass ATM options strike ltp of pe and ce 
+( optional build logic around ltp of option to enter trade or not)

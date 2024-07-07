@@ -1,0 +1,7 @@
+*download historical volatality from y finance for all indices daily once in the beining of the session and read throught day it 
+* download the 10 yrs govt interest rates / risk free interest rates daily at once 
+
+*caliculape prev days ohlc , cpr and camerialla daily once and use it during the day
+
+shoonya option greeks working( related code for ir and iv is also available)
+
